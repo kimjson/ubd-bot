@@ -1,0 +1,27 @@
+service: ubd-bot
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+# frameworkVersion: "=X.X.X"
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  region: ap-northeast-2
+  stage: ${self:custom.env.UBD_BOT_ENV}
+  environment:
+    UBD_BOT_ENV: ${self:custom.env.UBD_BOT_ENV}
+    TWITTER_CONSUMER_KEY: ${self:custom.env.TWITTER_CONSUMER_KEY}
+    TWITTER_CONSUMER_SECRET: ${self:custom.env.TWITTER_CONSUMER_SECRET}
+    TWITTER_ACCESS_TOKEN_KEY: ${self:custom.env.TWITTER_ACCESS_TOKEN_KEY}
+    TWITTER_ACCESS_TOKEN_SECRET: ${self:custom.env.TWITTER_ACCESS_TOKEN_SECRET}
+    MONGO_CONNECTION_STRING: ${self:custom.env.MONGO_CONNECTION_STRING}
+
+custom:
+  env: ${file(./.env.json)}
+
+functions:
+  tweetRandomQuote:
+    handler: src/handler.tweetRandomQuote
+    events:
+      - schedule: rate(24 hours)
