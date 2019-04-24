@@ -25,3 +25,10 @@ functions:
     handler: src/handler.tweetRandomQuote
     events:
       - schedule: rate(24 hours)
+  replyToMention:
+    handler: src/handler.replyToMention
+    events:
+      - http:
+          path: mentions
+          method: post
+          cors: true

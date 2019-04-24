@@ -15,17 +15,30 @@ const client = new Twitter({
   access_token_secret: TWITTER_ACCESS_TOKEN_SECRET,
 });
 
-const updateStatus = text => new Promise((resolve, reject) => {
+const updateStatus = ({ text, statusId }) => new Promise((resolve, reject) => {
   const status = (UBD_BOT_ENV === 'production')
     ? text
-    : `${text} - ${UBD_BOT_ENV} 환경에서 테스트 중`;
+    : `${text} - ${UBD_BOT_ENV} 환경에서 테스트 중. 중복 방지 값: ${Math.floor(Date.now() / 1000)}`;
+
+  const params = statusId
+    ? { status, in_reply_to_status_id: statusId }
+    : { status };
 
   client
-    .post('statuses/update', { status })
+    .post('statuses/update', params)
     .then(tweet => resolve(tweet))
     .catch(error => reject(error));
 });
 
+const getStatusIdFromLink = (link) => {
+  const tokens = link.split('/');
+
+  if (!tokens || tokens.length === 0) throw Error('Invalid twitter status link');
+
+  return Number(link.split('/')[-1]);
+}
+
 module.exports = {
   updateStatus,
+  getStatusIdFromLink,
 };
