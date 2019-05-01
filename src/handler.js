@@ -1,7 +1,7 @@
 'use strict';
 
 const { MongoClient } = require('mongodb');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const numeral = require('numeral');
 const crypto = require('crypto');
 
@@ -72,7 +72,7 @@ module.exports.replyToMention = async (event, context, callback) => {
 
       const movieTitle = getMovieTitleFromText(text);
 
-      const formattedDate = moment().format('YYYY년 MM월 DD일 A h시 mm분 ss초');
+      const formattedDate = moment().tz('Asia/Seoul').format('YYYY년 MM월 DD일 A h시 mm분 ss초');
       const audiences = await getAudiencesByMovieTitle(movieTitle);
       const audiencesInUBD = audiences / UBD;
 
@@ -80,7 +80,7 @@ module.exports.replyToMention = async (event, context, callback) => {
       const formattedAudiencesInUBD = numeral(audiencesInUBD).format('0,0.00');
 
       if (audiencesInUBD) {
-        const sendText =`@${fromUsername} ${formattedDate} 기준 ${movieTitle}의 동원 관객 수는 ${formattedAudiencesInUBD}UBD(=${formattedAudiences}명)입니다.`;
+        const sendText =`@${fromUsername} ${formattedDate} 기준 [${movieTitle}]의 동원 관객 수는 ${formattedAudiencesInUBD}UBD(=${formattedAudiences}명)입니다.`;
         await updateStatus({ text: sendText, statusId: mentionId });
       }
     }

@@ -1,14 +1,14 @@
 'use strict';
 
 const fetch = require('node-fetch');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const qs = require('qs');
 
 const { removeWhiteSpaces } = require('../shared/utils');
 
 const { KOFIC_API_KEY, KOFIC_API_BASE_URL } = process.env;
 
-module.exports.getBoxOfficeListByDate = async (date = moment().subtract(1, 'day')) => {
+module.exports.getBoxOfficeListByDate = async (date = moment().tz('Asia/Seoul').subtract(1, 'day')) => {
   const queryString = qs.stringify({
     key: KOFIC_API_KEY,
     targetDt: date.format('YYYYMMDD'),
