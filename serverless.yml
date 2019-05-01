@@ -16,9 +16,28 @@ provider:
     TWITTER_ACCESS_TOKEN_KEY: ${self:custom.env.TWITTER_ACCESS_TOKEN_KEY}
     TWITTER_ACCESS_TOKEN_SECRET: ${self:custom.env.TWITTER_ACCESS_TOKEN_SECRET}
     MONGO_CONNECTION_STRING: ${self:custom.env.MONGO_CONNECTION_STRING}
+    KMDB_SERVICE_KEY: ${self:custom.env.KMDB_SERVICE_KEY}
+    KMDB_HOST: ${self:custom.env.KMDB_HOST}
+    KOFIC_API_KEY: ${self:custom.env.KOFIC_API_KEY}
+    KOFIC_API_BASE_URL: ${self:custom.env.KOFIC_API_BASE_URL}
+    TWITTER_BOT_USERNAME: ${self:custom.env.TWITTER_BOT_USERNAME}
 
 custom:
   env: ${file(./.env.json)}
+
+plugins:
+  - serverless-offline
+
+package:
+  exclude:
+    - .git/**
+    - scripts/**
+    - .vscode/**
+    - schemas/**
+    - .gitignore
+    - .nvmrc
+    - README.md
+
 
 functions:
   tweetRandomQuote:
@@ -32,3 +51,15 @@ functions:
           path: mentions
           method: post
           cors: true
+  crc:
+    handler: src/handler.crc
+    events:
+      - schedule: rate(15 minutes)
+      - http:
+          path: mentions
+          method: get
+          cors: true
+          request:
+            parameters:
+              querystrings:
+                crc_token: true

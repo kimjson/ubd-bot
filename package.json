@@ -6,15 +6,31 @@
   "license": "MIT",
   "scripts": {
     "deploy": "serverless deploy -v",
-    "deployFunction": "serverless deploy -f"
+    "deploy-function": "serverless deploy -f",
+    "offline": "serverless offline",
+    "register-webhook": "node scripts/register-webhook.js",
+    "get-webhooks": "node scripts/get-webhooks.js",
+    "add-subscription": "node scripts/add-subscription.js",
+    "trigger-crc": "node scripts/trigger-crc.js"
   },
   "dependencies": {
     "aws-sdk": "^2.441.0",
+    "crypto": "^1.0.1",
+    "moment": "^2.24.0",
     "mongodb": "^3.2.3",
+    "node-fetch": "^2.4.1",
+    "numeral": "^2.0.6",
+    "oauth": "^0.9.15",
+    "qs": "^6.7.0",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.4",
     "twitter": "^1.7.1"
   },
   "devDependencies": {
+    "@types/request": "^2.48.1",
+    "@types/request-promise": "^4.1.43",
     "@types/twitter": "^1.7.0",
-    "serverless": "^1.41.1"
+    "serverless": "^1.41.1",
+    "serverless-offline": "^4.9.4"
   }
 }

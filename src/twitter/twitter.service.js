@@ -1,3 +1,5 @@
+'use strict';
+
 const Twitter = require('twitter');
 
 const {
@@ -6,6 +8,7 @@ const {
   TWITTER_CONSUMER_SECRET,
   TWITTER_ACCESS_TOKEN_KEY,
   TWITTER_ACCESS_TOKEN_SECRET,
+  TWITTER_BOT_USERNAME,
 } = process.env;
 
 const client = new Twitter({
@@ -15,10 +18,10 @@ const client = new Twitter({
   access_token_secret: TWITTER_ACCESS_TOKEN_SECRET,
 });
 
-const updateStatus = ({ text, statusId }) => new Promise((resolve, reject) => {
+module.exports.updateStatus = async ({ text, statusId }) => new Promise((resolve, reject) => {
   const status = (UBD_BOT_ENV === 'production')
     ? text
-    : `${text} - ${UBD_BOT_ENV} 환경에서 테스트 중. 중복 방지 값: ${Math.floor(Date.now() / 1000)}`;
+    : `${text} - ${UBD_BOT_ENV} 환경에서 테스트 중.`;
 
   const params = statusId
     ? { status, in_reply_to_status_id: statusId }
@@ -26,19 +29,24 @@ const updateStatus = ({ text, statusId }) => new Promise((resolve, reject) => {
 
   client
     .post('statuses/update', params)
-    .then(tweet => resolve(tweet))
+    .then(tweet => {
+      resolve(tweet);
+    })
     .catch(error => reject(error));
 });
 
-const getStatusIdFromLink = (link) => {
+module.exports.getStatusIdFromLink = (link) => {
   const tokens = link.split('/');
 
   if (!tokens || tokens.length === 0) throw Error('Invalid twitter status link');
 
-  return Number(link.split('/')[-1]);
+  return Number(tokens[tokens.length - 1]);
 }
 
-module.exports = {
-  updateStatus,
-  getStatusIdFromLink,
-};
+module.exports.getMovieTitleFromText = (text) => {
+  const tokens = text.split(`@${TWITTER_BOT_USERNAME} `);
+
+  if (!tokens || tokens.length === 0) throw Error('Invalid mention');
+
+  return tokens[tokens.length - 1];
+}

@@ -1,4 +1,4 @@
-const getRandomQuote = async db => {
+module.exports.getRandomQuote = async db => {
   try {
     const quotes = await db
       .collection('quotes')
@@ -14,8 +14,4 @@ const getRandomQuote = async db => {
   } catch (error) {
     throw error;
   }
-};
-
-module.exports = {
-  getRandomQuote
 };
