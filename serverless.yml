@@ -43,7 +43,7 @@ functions:
   tweetRandomQuote:
     handler: src/handler.tweetRandomQuote
     events:
-      - schedule: rate(24 hours)
+      - schedule: cron(0 0,12 * * *)
   replyToMention:
     handler: src/handler.replyToMention
     events:
