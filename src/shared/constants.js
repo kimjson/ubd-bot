@@ -1,1 +1,1 @@
-module.exports.UBD = 172212;
+exports.UBD = 172212;

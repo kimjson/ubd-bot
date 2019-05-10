@@ -1,17 +1,24 @@
-module.exports.getRandomQuote = async db => {
-  try {
-    const quotes = await db
-      .collection('quotes')
-      .aggregate([
-        { $sample: { size: 1 } },
-      ])
-      .toArray();
+const { connectToDatabase } = require('../database/database.service');
 
-    if (quotes.length === 0) throw Error('No quotes available');
+class QuoteService {
+  getCollection = async () => (await connectToDatabase()).collection('quotes');
 
-    return quotes[0];
+  getRandomQuote = async () => {
+    try {
+      const collection = await this.getCollection();
 
-  } catch (error) {
-    throw error;
-  }
-};
+      const quotes = collection
+        .aggregate([ { $sample: { size: 1 } }, ])
+        .toArray();
+
+      if (quotes.length === 0) throw Error('No quotes available');
+
+      return quotes[0];
+
+    } catch (error) {
+      throw error;
+    }
+  };
+}
+
+exports.quoteService = new QuoteService();

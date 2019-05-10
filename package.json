@@ -11,12 +11,14 @@
     "register-webhook": "node scripts/register-webhook.js",
     "get-webhooks": "node scripts/get-webhooks.js",
     "add-subscription": "node scripts/add-subscription.js",
-    "trigger-crc": "node scripts/trigger-crc.js"
+    "trigger-crc": "node scripts/trigger-crc.js",
+    "get-old-boxoffice": "node scripts/get-old-boxoffice.js"
   },
   "dependencies": {
     "aws-sdk": "^2.441.0",
     "crypto": "^1.0.1",
     "moment": "^2.24.0",
+    "moment-range": "^4.0.2",
     "moment-timezone": "^0.5.25",
     "mongodb": "^3.2.3",
     "node-fetch": "^2.4.1",

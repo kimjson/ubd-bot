@@ -1,5 +1,3 @@
 class MovieNotFound extends Error {}
 
-module.exports = {
-  MovieNotFound,
-};
+exports.MovieNotFound = MovieNotFound;

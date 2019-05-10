@@ -10,20 +10,7 @@ provider:
   region: ap-northeast-2
   stage: ${self:custom.env.UBD_BOT_ENV}
   environment:
-    UBD_BOT_ENV: ${self:custom.env.UBD_BOT_ENV}
-    TWITTER_CONSUMER_KEY: ${self:custom.env.TWITTER_CONSUMER_KEY}
-    TWITTER_CONSUMER_SECRET: ${self:custom.env.TWITTER_CONSUMER_SECRET}
-    TWITTER_ACCESS_TOKEN_KEY: ${self:custom.env.TWITTER_ACCESS_TOKEN_KEY}
-    TWITTER_ACCESS_TOKEN_SECRET: ${self:custom.env.TWITTER_ACCESS_TOKEN_SECRET}
-    MONGO_CONNECTION_STRING: ${self:custom.env.MONGO_CONNECTION_STRING}
-    KMDB_SERVICE_KEY: ${self:custom.env.KMDB_SERVICE_KEY}
-    KMDB_HOST: ${self:custom.env.KMDB_HOST}
-    KOFIC_API_KEY: ${self:custom.env.KOFIC_API_KEY}
-    KOFIC_API_BASE_URL: ${self:custom.env.KOFIC_API_BASE_URL}
-    TWITTER_BOT_USERNAME: ${self:custom.env.TWITTER_BOT_USERNAME}
-
-custom:
-  env: ${file(./.env.json)}
+    NODE_ENV: ${env:NODE_ENV}
 
 plugins:
   - serverless-offline

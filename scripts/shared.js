@@ -1,5 +1,4 @@
 const request = require('request-promise');
-const qs = require('qs');
 
 const envJson = require('../.env.json');
 
@@ -22,14 +21,14 @@ const options = {
   json: true,
 };
 
-module.exports.triggerCRC = async (webhookId) => {
+exports.triggerCRC = async (webhookId) => {
   return request.put({
     ...options,
     url: `${TWITTER_API_BASE_URL}/account_activity/all/${UBD_BOT_ENV}/webhooks/${webhookId}.json`,
   });
 };
 
-module.exports.registerWebhook = async (webhookURL) => {
+exports.registerWebhook = async (webhookURL) => {
   return request.post({
     ...options,
     url: `${TWITTER_API_BASE_URL}/account_activity/all/${UBD_BOT_ENV}/webhooks.json`,
@@ -37,14 +36,14 @@ module.exports.registerWebhook = async (webhookURL) => {
   })
 }
 
-module.exports.getWebhooks = async () => {
+exports.getWebhooks = async () => {
   return request.get({
     ...options,
     url: `${TWITTER_API_BASE_URL}/account_activity/all/webhooks.json`,
   })
 }
 
-module.exports.addSubscription =  async () => {
+exports.addSubscription =  async () => {
   return request.post({
     ...options,
     url: `${TWITTER_API_BASE_URL}/account_activity/all/${UBD_BOT_ENV}/subscriptions.json`,

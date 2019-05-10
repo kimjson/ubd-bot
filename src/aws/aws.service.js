@@ -1,3 +1,5 @@
-module.exports.isWarmerEvent = (event) => {
-  return event.source === 'aws.events'
+class AwsService {
+  isWarmerEvent = (event) => event.source === 'aws.events'
 }
+
+exports.awsService = new AwsService();
