@@ -2,11 +2,12 @@
 
 const numeral = require('numeral');
 
-const { quoteService } = require('./quote/quote.service');
 const { twitterService } = require('./twitter/twitter.service');
 const { koficService } = require('./kofic/kofic.service');
 const { awsService } = require('./aws/aws.service');
 const { configService } = require('./config/config.service');
+
+const { QuoteService } = require('./quote/quote.service');
 
 const { UBD } = require('./shared/constants');
 const { moment } = require('./shared/utils/moment');
@@ -17,7 +18,9 @@ exports.tweetRandomQuote = async (event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false;
 
   try {
-    const { text } = await quoteService.getRandomQuote(db);
+    const quoteService = await QuoteService.build();
+
+    const { text } = await quoteService.findOneRandomly();
     const tweet = await twitterService.updateStatus({ text });
 
     callback(null, tweet);

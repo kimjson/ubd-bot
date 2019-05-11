@@ -1,39 +1,37 @@
 const { databaseService } = require('../database/database.service');
-
-const _findOrCreateMovie = async (db, movieInput) => {
-  const collection = db.collection('movies');
-
-  const movie = collection.findOne({ title: titleWithoutWhiteSpaces });
-
-  if (!movie || movie.countedAt < movieInput.countedAt) {
-    console.log('insert!');
-    const filter = { title: titleWithoutWhiteSpaces };
-    const doc = { ...movieInput, ...filter };
-
-    const insertResult = collection.replaceOne(filter, doc, { upsert: true });
-
-    return insertResult.ops[0];
-  }
-
-  return movie;
-};
+const { removeWhiteSpaces } = require('../shared/utils');
 
 class MovieService {
-  findOrCreateMovie = async (movieInput) => {
-    const db = await databaseService.connectToDatabase();
-    const movie = _findOrCreateMovie(db, movieInput);
+  constructor(client) {
+    this.client = client;
+    this.collection = databaseService.getCollection(client, 'movies');
+  }
+
+  static async build() {
+    return new MovieService(await databaseService.connect());
+  }
+
+  async findOrUpsertOne(movieInput) {
+    const filter = { title: removeWhiteSpaces(movieInput.title) };
+
+    const movie = this.collection.findOne(filter);
+
+    if (!movie || movie.countedAt < movieInput.countedAt) {
+      console.log('insert!');
+      const doc = { ...movieInput, ...filter };
+
+      const insertResult = this.collection.replaceOne(filter, doc, { upsert: true });
+
+      return insertResult.ops[0];
+    }
 
     return movie;
   }
 
-  findOrCreateMovieAndClose = async (movieInput) => {
-    const db = await databaseService.connectToDatabase();
-    const movie = _findOrCreateMovie(db, movieInput);
-
-    db.close();
-
-    return movie;
+  quit() {
+    this.collection = undefined;
+    this.client.close();
   }
 }
 
-exports.movieService = new MovieService();
+exports.MovieService = MovieService;

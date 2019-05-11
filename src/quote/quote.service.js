@@ -1,13 +1,18 @@
-const { connectToDatabase } = require('../database/database.service');
+const { databaseService } = require('../database/database.service');
 
 class QuoteService {
-  getCollection = async () => (await connectToDatabase()).collection('quotes');
+  constructor(client) {
+    this.client = client;
+    this.collection = databaseService.getCollection(client, 'quotes');
+  }
 
-  getRandomQuote = async () => {
+  static async build() {
+    return new QuoteService(await databaseService.connect());
+  }
+
+  async findOneRandomly() {
     try {
-      const collection = await this.getCollection();
-
-      const quotes = collection
+      const quotes = this.collection
         .aggregate([ { $sample: { size: 1 } }, ])
         .toArray();
 
@@ -18,7 +23,12 @@ class QuoteService {
     } catch (error) {
       throw error;
     }
-  };
+  }
+
+  quit() {
+    this.client.close();
+    this.collection = undefined;
+  }
 }
 
-exports.quoteService = new QuoteService();
+exports.QuoteService = QuoteService;

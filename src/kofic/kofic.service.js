@@ -13,7 +13,11 @@ const KOFIC_API_BASE_URL = configService.get('KOFIC_API_BASE_URL');
 const KOFIC_API_KEY = configService.get('KOFIC_API_KEY');
 
 class KoficService {
-  getBoxOfficeListByDate = async (date = moment().subtract(1, 'day')) => {
+  static build() {
+    return new KoficService();
+  }
+
+  async getBoxOfficeListByDate(date = moment().subtract(1, 'day')) {
     const queryString = qs.stringify({
       key: KOFIC_API_KEY,
       targetDt: date.format('YYYYMMDD'),
@@ -26,7 +30,7 @@ class KoficService {
       .then(json => json.boxOfficeResult.dailyBoxOfficeList);
   };
 
-  getAudiencesByMovieTitle = async (title) => {
+  async getAudiencesByMovieTitle(title) {
     const titleQuery = removeWhiteSpaces(title);
 
     return this.getBoxOfficeListByDate()
@@ -38,7 +42,7 @@ class KoficService {
       });
   };
 
-  getWeeklyBoxOffice = async (date) => {
+  async getWeeklyBoxOffice(date) {
     const options = {
       json: true,
     };
@@ -54,4 +58,5 @@ class KoficService {
   }
 }
 
-exports.koficService = new KoficService();
+exports.KoficService = KoficService;
+exports.koficService = KoficService.build();

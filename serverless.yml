@@ -27,6 +27,7 @@ package:
     - .gitignore
     - .nvmrc
     - README.md
+    - .env.example
 
 
 functions:

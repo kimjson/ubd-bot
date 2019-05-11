@@ -1,5 +1,12 @@
 class AwsService {
-  isWarmerEvent = (event) => event.source === 'aws.events'
+  static build() {
+    return new AwsService();
+  }
+
+  isWarmerEvent(event) {
+    return event.source === 'aws.events';
+  }
 }
 
-exports.awsService = new AwsService();
+exports.AwsService = AwsService;
+exports.awsService = AwsService.build();
