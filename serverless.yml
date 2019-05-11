@@ -8,9 +8,12 @@ provider:
   name: aws
   runtime: nodejs8.10
   region: ap-northeast-2
-  stage: ${self:custom.env.UBD_BOT_ENV}
+  stage: ${self:custom.NODE_ENV}
   environment:
-    NODE_ENV: ${env:NODE_ENV}
+    NODE_ENV: ${self:custom.NODE_ENV}
+
+custom:
+  NODE_ENV: ${env:NODE_ENV, 'development'}
 
 plugins:
   - serverless-offline

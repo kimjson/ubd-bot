@@ -6,7 +6,7 @@ const request = require('request-promise');
 
 const { configService } = require('../config/config.service');
 
-const UBD_BOT_ENV = configService.get('UBD_BOT_ENV')
+const NODE_ENV = configService.getNodeEnv();
 const TWITTER_CONSUMER_KEY = configService.get('TWITTER_CONSUMER_KEY')
 const TWITTER_CONSUMER_SECRET = configService.get('TWITTER_CONSUMER_SECRET')
 const TWITTER_ACCESS_TOKEN_KEY = configService.get('TWITTER_ACCESS_TOKEN_KEY')
@@ -32,9 +32,9 @@ const options = {
 
 class TwitterService {
   updateStatus = async ({ text, statusId }) => new Promise((resolve, reject) => {
-    const status = (UBD_BOT_ENV === 'production')
+    const status = (NODE_ENV === 'production')
       ? text
-      : `${text} - ${UBD_BOT_ENV} 환경에서 테스트 중.`;
+      : `${text} - ${NODE_ENV} 환경에서 테스트 중.`;
 
     const params = statusId
       ? { status, in_reply_to_status_id: statusId }
@@ -63,14 +63,14 @@ class TwitterService {
   triggerCRC = async (webhookId) => {
     return request.put({
       ...options,
-      url: `${TWITTER_API_BASE_URL}/account_activity/all/${UBD_BOT_ENV}/webhooks/${webhookId}.json`,
+      url: `${TWITTER_API_BASE_URL}/account_activity/all/${NODE_ENV}/webhooks/${webhookId}.json`,
     });
   };
 
   registerWebhook = async (webhookURL) => {
     return request.post({
       ...options,
-      url: `${TWITTER_API_BASE_URL}/account_activity/all/${UBD_BOT_ENV}/webhooks.json`,
+      url: `${TWITTER_API_BASE_URL}/account_activity/all/${NODE_ENV}/webhooks.json`,
       qs: { url: webhookURL },
     })
   };
@@ -85,7 +85,7 @@ class TwitterService {
   addSubscription =  async () => {
     return request.post({
       ...options,
-      url: `${TWITTER_API_BASE_URL}/account_activity/all/${UBD_BOT_ENV}/subscriptions.json`,
+      url: `${TWITTER_API_BASE_URL}/account_activity/all/${NODE_ENV}/subscriptions.json`,
     })
   };
 }
