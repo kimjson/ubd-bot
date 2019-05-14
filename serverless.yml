@@ -35,6 +35,10 @@ functions:
     handler: src/handler.tweetRandomQuote
     events:
       - schedule: cron(0 0,12 * * ? *)
+  collectDailyBoxOffice:
+    handler: src/handler.collectDailyBoxOffice
+    events:
+      - schedule: cron(0 0 * * ? *)
   replyToMention:
     handler: src/handler.replyToMention
     events:

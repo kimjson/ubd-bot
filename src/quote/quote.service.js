@@ -12,7 +12,7 @@ class QuoteService {
 
   async findOneRandomly() {
     try {
-      const quotes = this.collection
+      const quotes = await this.collection
         .aggregate([ { $sample: { size: 1 } }, ])
         .toArray();
 

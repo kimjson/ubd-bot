@@ -24,7 +24,6 @@ const main = async () => {
     for (let boxOffice of weeklyBoxOfficeList) {
       const { movieNm: title, audiAcc: audiences } = boxOffice;
       const movie = { title, audiences: Number(audiences), countedAt }
-      console.log(movie);
 
       await movieService.findOrUpsertOne(movie);
     }

@@ -1,18 +1,12 @@
 'use strict';
 
-const numeral = require('numeral');
-
 const { twitterService } = require('./twitter/twitter.service');
 const { koficService } = require('./kofic/kofic.service');
 const { awsService } = require('./aws/aws.service');
-const { configService } = require('./config/config.service');
+const { textService } = require('./text/text.service');
 
 const { QuoteService } = require('./quote/quote.service');
-
-const { UBD } = require('./shared/constants');
-const { moment } = require('./shared/utils/moment');
-
-const TWITTER_BOT_USERNAME = configService.get('TWITTER_BOT_USERNAME');
+const { MovieService } = require('./movie/movie.service');
 
 exports.tweetRandomQuote = async (event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false;
@@ -41,35 +35,55 @@ exports.crc = (event, context, callback) => {
   });
 }
 
+exports.collectDailyBoxOffice = async (event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  try {
+    const movieService = await MovieService.build();
+
+    const { showRange, dailyBoxOfficeList } = await koficService.findDailyBoxOfficeResultByDate();
+    const { to: countedAt } = textService.parseKoficRange(showRange);
+
+    const promises = dailyBoxOfficeList.map(async (boxOffice) => {
+      const { movieNm: title, audiAcc: audiences } = boxOffice;
+      const movie = { title, audiences: Number(audiences), countedAt }
+
+      return await movieService.findOrUpsertOne(movie);
+    });
+
+    const movies = await Promise.all(promises);
+
+    callback(null, movies);
+
+  } catch (error) {
+    callback(JSON.stringify(error));
+  }
+}
+
 exports.replyToMention = async (event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
   try {
     const eventBody = JSON.parse(event.body);
     const { tweet_create_events: tweetCreateEvents = [] } = eventBody;
 
-    for (let tweetCreateEvent of tweetCreateEvents) {
-      const {
-        id_str: mentionId,
-        text,
-        in_reply_to_screen_name: toUsername,
-        user: { screen_name: fromUsername }
-      } = tweetCreateEvent;
+    const movieService = await MovieService.build();
 
-      if (toUsername !== TWITTER_BOT_USERNAME) continue;
+    const replyPromises = tweetCreateEvents
+      .filter(twitterService.isMentionForBot)
+      .map(twitterService.parseTweetCreateEvent)
+      .map(async (parsedEvent) => {
+        const { text } = parsedEvent;
+        const title = textService.extractMovieTitle(text);
 
-      const movieTitle = twitterService.getMovieTitleFromText(text);
+        const boxOffice = await koficService.findDailyBoxOfficeByTitle(title);
+        const upsertedMovie = await movieService.upsertOneByBoxOffice(boxOffice);
+        const movie = upsertedMovie || (await movieService.findMovieByTitle(title));
 
-      const formattedDate = moment().format('YYYY년 MM월 DD일 A h시 mm분 ss초');
-      const audiences = await koficService.getAudiencesByMovieTitle(movieTitle);
-      const audiencesInUBD = audiences / UBD;
+        return twitterService.computeUbdAndReply(parsedEvent, movie);
+      });
 
-      const formattedAudiences = numeral(audiences).format('0,0');
-      const formattedAudiencesInUBD = numeral(audiencesInUBD).format('0,0.00');
-
-      if (audiencesInUBD) {
-        const sendText =`@${fromUsername} ${formattedDate} 기준 [${movieTitle}]의 동원 관객 수는 ${formattedAudiencesInUBD}UBD(=${formattedAudiences}명)입니다.`;
-        await twitterService.updateStatus({ text: sendText, statusId: mentionId });
-      }
-    }
+    await Promise.all(replyPromises);
 
     return {
       statusCode: 200,

@@ -5,3 +5,5 @@ momentTimezone.tz.setDefault("Asia/Seoul");
 const moment = momentRange.extendMoment(momentTimezone)
 
 exports.moment = moment;
+
+exports.yesterdayMoment = () => moment().subtract(1, 'day');

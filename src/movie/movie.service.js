@@ -1,5 +1,5 @@
 const { databaseService } = require('../database/database.service');
-const { removeWhiteSpaces } = require('../shared/utils');
+const { textService } = require('../text/text.service');
 
 class MovieService {
   constructor(client) {
@@ -11,21 +11,40 @@ class MovieService {
     return new MovieService(await databaseService.connect());
   }
 
-  async findOrUpsertOne(movieInput) {
-    const filter = { title: removeWhiteSpaces(movieInput.title) };
+  async findMovieByTitle(title) {
+    return this.collection.findOne({ title: textService.removeWhiteSpaces(title) });
+  }
 
-    const movie = this.collection.findOne(filter);
+  async findOrUpsertOne(movieInput) {
+    const filter = { title: textService.removeWhiteSpaces(movieInput.title) };
+
+    const movie = await this.collection.findOne(filter);
 
     if (!movie || movie.countedAt < movieInput.countedAt) {
       console.log('insert!');
-      const doc = { ...movieInput, ...filter };
-
-      const insertResult = this.collection.replaceOne(filter, doc, { upsert: true });
-
-      return insertResult.ops[0];
+      return await this.upsertOne(movieInput);
     }
 
     return movie;
+  }
+
+  async upsertOne(movieInput) {
+    const filter = { title: textService.removeWhiteSpaces(movieInput.title) };
+    const doc = { ...movieInput, ...filter };
+    const upsertResult = await this.collection.replaceOne(filter, doc, { upsert: true });
+
+    return upsertResult.ops[0];
+  }
+
+  async upsertOneByBoxOffice(boxOffice) {
+    if (boxOffice && Number.isFinite(boxOffice.audiAcc)) {
+      const { audiAcc: audiences } = boxOffice;
+      const countedAt = new Date();
+      const movieInput = { title, audiences, countedAt };
+      return await movieService.upsertOne(movieInput);
+    }
+
+    return undefined;
   }
 
   quit() {

@@ -1,6 +1,6 @@
 {
   "name": "ubd-bot",
-  "version": "1.0.1",
+  "version": "1.2.0",
   "description": "UBD Twitter Bot",
   "author": "Stein Kim",
   "license": "MIT",
@@ -22,7 +22,6 @@
     "moment-range": "^4.0.2",
     "moment-timezone": "^0.5.25",
     "mongodb": "^3.2.3",
-    "node-fetch": "^2.4.1",
     "numeral": "^2.0.6",
     "oauth": "^0.9.15",
     "qs": "^6.7.0",
