@@ -6,7 +6,8 @@ jspm_packages
 .serverless
 
 # Environment variable file
-.env.json
+.env.development
+.env.production
 
 # Visual Studio Code
 .vscode/

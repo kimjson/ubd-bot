@@ -1,17 +1,34 @@
-module.exports.getRandomQuote = async db => {
-  try {
-    const quotes = await db
-      .collection('quotes')
-      .aggregate([
-        { $sample: { size: 1 } },
-      ])
-      .toArray();
+const { databaseService } = require('../database/database.service');
 
-    if (quotes.length === 0) throw Error('No quotes available');
-
-    return quotes[0];
-
-  } catch (error) {
-    throw error;
+class QuoteService {
+  constructor(client) {
+    this.client = client;
+    this.collection = databaseService.getCollection(client, 'quotes');
   }
-};
+
+  static async build() {
+    return new QuoteService(await databaseService.connect());
+  }
+
+  async findOneRandomly() {
+    try {
+      const quotes = await this.collection
+        .aggregate([ { $sample: { size: 1 } }, ])
+        .toArray();
+
+      if (quotes.length === 0) throw Error('No quotes available');
+
+      return quotes[0];
+
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  quit() {
+    this.client.close();
+    this.collection = undefined;
+  }
+}
+
+exports.QuoteService = QuoteService;

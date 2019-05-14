@@ -1,39 +1,21 @@
 'use strict';
 
-const { MongoClient } = require('mongodb');
-const moment = require('moment-timezone');
-const numeral = require('numeral');
-const crypto = require('crypto');
+const { twitterService } = require('./twitter/twitter.service');
+const { koficService } = require('./kofic/kofic.service');
+const { awsService } = require('./aws/aws.service');
+const { textService } = require('./text/text.service');
 
-const { getRandomQuote } = require('./quote/quote.service');
-const { updateStatus, getMovieTitleFromText } = require('./twitter/twitter.service');
-const { getAudiencesByMovieTitle } = require('./kofic/kofic.service');
-const { UBD } = require('./shared/constants');
-const { isWarmerEvent } = require('./aws/aws.service');
+const { QuoteService } = require('./quote/quote.service');
+const { MovieService } = require('./movie/movie.service');
 
-const { MONGO_CONNECTION_STRING, TWITTER_CONSUMER_SECRET, TWITTER_BOT_USERNAME } = process.env;
-
-let cachedDb = null;
-
-const connectToDatabase = (uri) => {
-  if (cachedDb) {
-    return Promise.resolve(cachedDb);
-  }
-
-  return MongoClient.connect(uri, { useNewUrlParser: true })
-    .then((client) => {
-      cachedDb = client.db('ubd-bot');
-      return cachedDb;
-    });
-}
-
-module.exports.tweetRandomQuote = async (event, context, callback) => {
+exports.tweetRandomQuote = async (event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false;
 
   try {
-    const db = await connectToDatabase(MONGO_CONNECTION_STRING);
-    const { text } = await getRandomQuote(db);
-    const tweet = await updateStatus({ text });
+    const quoteService = await QuoteService.build();
+
+    const { text } = await quoteService.findOneRandomly();
+    const tweet = await twitterService.updateStatus({ text });
 
     callback(null, tweet);
 
@@ -42,48 +24,66 @@ module.exports.tweetRandomQuote = async (event, context, callback) => {
   }
 };
 
-module.exports.crc = (event, context, callback) => {
-  if (isWarmerEvent(event)) return;
+exports.crc = (event, context, callback) => {
+  if (awsService.isWarmerEvent(event)) return;
 
-  const { crc_token } = event.queryStringParameters;
+  const { crc_token: crcToken } = event.queryStringParameters;
 
   callback(null, {
     statusCode: 200,
-    body: JSON.stringify({
-      response_token: `sha256=${crypto.createHmac('sha256', TWITTER_CONSUMER_SECRET).update(crc_token).digest('base64')}`,
-    }),
+    body: JSON.stringify(twitterService.buildCrcPayload(crcToken)),
   });
 }
 
-module.exports.replyToMention = async (event, context, callback) => {
+exports.collectDailyBoxOffice = async (event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  try {
+    const movieService = await MovieService.build();
+
+    const { showRange, dailyBoxOfficeList } = await koficService.findDailyBoxOfficeResultByDate();
+    const { to: countedAt } = textService.parseKoficRange(showRange);
+
+    const promises = dailyBoxOfficeList.map(async (boxOffice) => {
+      const { movieNm: title, audiAcc: audiences } = boxOffice;
+      const movie = { title, audiences: Number(audiences), countedAt }
+
+      return await movieService.findOrUpsertOne(movie);
+    });
+
+    const movies = await Promise.all(promises);
+
+    callback(null, movies);
+
+  } catch (error) {
+    callback(JSON.stringify(error));
+  }
+}
+
+exports.replyToMention = async (event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
   try {
     const eventBody = JSON.parse(event.body);
     const { tweet_create_events: tweetCreateEvents = [] } = eventBody;
 
-    for (let tweetCreateEvent of tweetCreateEvents) {
-      const {
-        id_str: mentionId,
-        text,
-        in_reply_to_screen_name: toUsername,
-        user: { screen_name: fromUsername }
-      } = tweetCreateEvent;
+    const movieService = await MovieService.build();
 
-      if (toUsername !== TWITTER_BOT_USERNAME) continue;
+    const replyPromises = tweetCreateEvents
+      .filter(twitterService.isMentionForBot)
+      .map(twitterService.parseTweetCreateEvent)
+      .map(async (parsedEvent) => {
+        const { text } = parsedEvent;
+        const title = textService.extractMovieTitle(text);
 
-      const movieTitle = getMovieTitleFromText(text);
+        const boxOffice = await koficService.findDailyBoxOfficeByTitle(title);
+        const upsertedMovie = await movieService.upsertOneByBoxOffice(boxOffice);
+        const movie = upsertedMovie || (await movieService.findMovieByTitle(title));
 
-      const formattedDate = moment().tz('Asia/Seoul').format('YYYY년 MM월 DD일 A h시 mm분 ss초');
-      const audiences = await getAudiencesByMovieTitle(movieTitle);
-      const audiencesInUBD = audiences / UBD;
+        return twitterService.computeUbdAndReply(parsedEvent, movie);
+      });
 
-      const formattedAudiences = numeral(audiences).format('0,0');
-      const formattedAudiencesInUBD = numeral(audiencesInUBD).format('0,0.00');
-
-      if (audiencesInUBD) {
-        const sendText =`@${fromUsername} ${formattedDate} 기준 [${movieTitle}]의 동원 관객 수는 ${formattedAudiencesInUBD}UBD(=${formattedAudiences}명)입니다.`;
-        await updateStatus({ text: sendText, statusId: mentionId });
-      }
-    }
+    await Promise.all(replyPromises);
 
     return {
       statusCode: 200,

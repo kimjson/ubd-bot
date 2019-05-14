@@ -1,34 +1,57 @@
 'use strict';
 
-const fetch = require('node-fetch');
-const moment = require('moment-timezone');
-const qs = require('qs');
+const request = require('request-promise');
 
-const { removeWhiteSpaces } = require('../shared/utils');
+const { yesterdayMoment } = require('../shared/utils/moment');
 
-const { KOFIC_API_KEY, KOFIC_API_BASE_URL } = process.env;
+const { configService } = require('../config/config.service');
+const { textService } = require('../text/text.service');
 
-module.exports.getBoxOfficeListByDate = async (date = moment().tz('Asia/Seoul').subtract(1, 'day')) => {
-  const queryString = qs.stringify({
-    key: KOFIC_API_KEY,
-    targetDt: date.format('YYYYMMDD'),
-  });
+const KOFIC_API_BASE_URL = configService.get('KOFIC_API_BASE_URL');
+const KOFIC_API_KEY = configService.get('KOFIC_API_KEY');
 
-  return fetch(`${KOFIC_API_BASE_URL}/boxoffice/searchDailyBoxOfficeList.json?${queryString}`)
-    .then(response => {
-      return response.json()
-    })
-    .then(json => json.boxOfficeResult.dailyBoxOfficeList);
-}
-
-module.exports.getAudiencesByMovieTitle = async (title) => {
-  const titleQuery = removeWhiteSpaces(title);
-
-  return this.getBoxOfficeListByDate()
-    .then(list => {
-      const boxOfficeOfTheMovie = list
-        .find(item => removeWhiteSpaces(item.movieNm) === titleQuery);
-
-      return boxOfficeOfTheMovie && boxOfficeOfTheMovie.audiAcc;
+class KoficService {
+  constructor() {
+    this.request = request.defaults({
+      baseUrl: `${KOFIC_API_BASE_URL}/boxoffice`,
+      qs: { key: KOFIC_API_KEY },
+      json: true,
     });
+  }
+
+  static build() {
+    return new KoficService();
+  }
+
+  async findDailyBoxOfficeResultByDate(moment_ = yesterdayMoment()) {
+    const { boxOfficeResult } = await this.request({
+      url: '/searchDailyBoxOfficeList.json',
+      qs: { targetDt: textService.formatMomentForKofic(moment_) },
+    });
+
+    return boxOfficeResult;
+  };
+
+  async findDailyBoxOfficeListByDate(moment_ = yesterdayMoment()) {
+    const { dailyBoxOfficeList } = await this.findDailyBoxOfficeResultByDate(moment_);
+
+    return dailyBoxOfficeList;
+  };
+
+  async findDailyBoxOfficeByTitle(title, moment_ = yesterdayMoment()) {
+    const titleQuery = textService.removeWhiteSpaces(title);
+    const boxOfficeList = await this.findDailyBoxOfficeListByDate();
+
+    return boxOfficeList.find(boxOffice => textService.removeWhiteSpaces(boxOffice.movieNm) === titleQuery);
+  }
+
+  async getWeeklyBoxOffice(moment_) {
+    return this.request.get({
+      url: `/searchWeeklyBoxOfficeList.json`,
+      qs: { targetDt: textService.formatMomentForKofic(moment_) },
+    });
+  }
 }
+
+exports.KoficService = KoficService;
+exports.koficService = KoficService.build();
