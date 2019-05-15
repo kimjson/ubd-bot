@@ -17,6 +17,8 @@ const main = async () => {
     const boxOfficeList = await koficService.findDailyBoxOfficeListByDate(day);
     const countedAt = day.toDate();
 
+    console.log(`${day.format('YYYY-MM-DD')}: ${boxOfficeList.length || 0}개의 흥행 성적을 가져왔습니다.`);
+
     for (let boxOffice of boxOfficeList) {
       const { movieNm: title, audiAcc: audiences } = boxOffice;
       const movie = { title, audiences: Number(audiences), countedAt }

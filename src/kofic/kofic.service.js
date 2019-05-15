@@ -33,7 +33,7 @@ class KoficService {
   };
 
   async findDailyBoxOfficeListByDate(moment_ = yesterdayMoment()) {
-    const { dailyBoxOfficeList } = await this.findDailyBoxOfficeResultByDate(moment_);
+    const { dailyBoxOfficeList = [] } = (await this.findDailyBoxOfficeResultByDate(moment_)) || {};
 
     return dailyBoxOfficeList;
   };
