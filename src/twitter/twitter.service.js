@@ -78,23 +78,26 @@ class TwitterService {
   }
 
   async computeUbdAndReply(parsedEvent, movie) {
+    let replyText;
+
+    const { fromUsername, mentionId } = parsedEvent;
+
     if (movie && Number.isFinite(movie.audiences)) {
-      const { fromUsername, mentionId } = parsedEvent;
       const { audiences, title } = movie;
 
       const audiencesInUBD = audiences / UBD;
       const formattedAudiences = textService.formatAudiences(audiences);
       const formattedAudiencesInUBD = textService.formatUBD(audiencesInUBD);
 
-      const replyText = textService.buildReply(
+      replyText = textService.buildReply(
         fromUsername, textService.formatMomentForTweet(), title,
         formattedAudiencesInUBD, formattedAudiences,
       );
-
-      return this.updateStatus({ text: replyText, statusId: mentionId });
+    } else {
+      replyText = textService.buildErrorReply(fromUsername, textService.formatMomentForInstagramPost());
     }
 
-    return undefined;
+    return this.updateStatus({ text: replyText, statusId: mentionId });
   }
 
   getMovieTitleFromText(text) {

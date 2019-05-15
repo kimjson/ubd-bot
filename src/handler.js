@@ -42,7 +42,7 @@ exports.collectDailyBoxOffice = async (event, context, callback) => {
     const movieService = await MovieService.build();
 
     const { showRange, dailyBoxOfficeList } = await koficService.findDailyBoxOfficeResultByDate();
-    const { to: countedAt } = textService.parseKoficRange(showRange);
+    const { to: countedAt } = textService.parseKoficRange(showRange) || {};
 
     const promises = dailyBoxOfficeList.map(async (boxOffice) => {
       const { movieNm: title, audiAcc: audiences } = boxOffice;
