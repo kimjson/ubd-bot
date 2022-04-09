@@ -18,7 +18,7 @@
     "aws-sdk": "^2.441.0",
     "crypto": "^1.0.1",
     "dotenv": "^8.0.0",
-    "moment": "^2.24.0",
+    "moment": "^2.29.2",
     "moment-range": "^4.0.2",
     "moment-timezone": "^0.5.25",
     "mongodb": "^3.2.3",
