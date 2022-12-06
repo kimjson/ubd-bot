@@ -24,7 +24,7 @@
     "mongodb": "^3.2.3",
     "numeral": "^2.0.6",
     "oauth": "^0.9.15",
-    "qs": "^6.7.0",
+    "qs": "^6.7.3",
     "request": "^2.88.0",
     "request-promise": "^4.2.4",
     "twitter": "^1.7.1"
